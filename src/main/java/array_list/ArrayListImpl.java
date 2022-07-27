@@ -26,16 +26,29 @@ public class ArrayListImpl<T> implements ArrayList<T>{
     public ArrayListImpl(T[] o) {
         if(o.length > 0) {
             storage = new Object[o.length];
-            copy(o, storage);
+            copyOfRange(o, storage, 0, o.length);
             size = o.length;
         } else {
             storage = EMPTY_ARRAY;
         }
     }
 
-    private void copy(Object[] resource, Object[] target) {
-        for(int i = 0; i < resource.length; i++) {
+    private void copyOfRange(Object[] resource, Object[] target, int start, int end) {
+        for(int i = start; i < end; i++) {
             target[i] = resource[i];
+        }
+    }
+    private void copyOfRangeToNewArray(Object[] resource, Object[] target, int start, int end) {
+        int count = 0;
+        for(int i = start; i < end; i++) {
+            target[count] = resource[i];
+            count++;
+        }
+    }
+
+    private void copyOfRangeNextValues(Object[] resource, Object[] target, int start, int end) {
+        for(int i = start; i < end; i++) {
+            target[i - 1] = resource[i];
         }
     }
 
@@ -47,21 +60,22 @@ public class ArrayListImpl<T> implements ArrayList<T>{
 
     private void rebuild(int value) {
         Object[] o = new Object[storage.length + value];
-        copy(storage, o);
+        copyOfRange(storage, o, 0, storage.length);
         storage = o;
         size += value;
     }
 
-    private void move(int index) {
-        Object[] expected = new Object[size + 1];
-        copy(storage, expected);
+    private void moveElementsForward(int index) {
+        Object[] o = new Object[size + 1];
+        copyOfRange(storage, o, 0, storage.length);
         for(int i = index; i < size; i++) {
-            expected[i + 1] = storage[i];
+            o[i + 1] = storage[i];
         }
-        storage = expected;
+        storage = o;
         size++;
     }
 
+    @Override
     public T[] toArray() {
         return (T[]) storage;
     }
@@ -71,7 +85,7 @@ public class ArrayListImpl<T> implements ArrayList<T>{
         if(storage.length < size + 1) {
             rebuild(1);
         }
-        storage[size] = element;
+        storage[size - 1] = element;
         return true;
     }
 
@@ -80,7 +94,7 @@ public class ArrayListImpl<T> implements ArrayList<T>{
         if(index == size) {
             add(element);
         } else if(index < size) {
-            move(index);
+            moveElementsForward(index);
             set(index, element);
         } else {
             throw new IllegalArgumentException("Capacity less then ArrayList size: " + index);
@@ -109,12 +123,12 @@ public class ArrayListImpl<T> implements ArrayList<T>{
         return size == 0;
     }
 
-    //TODO: remove size
     @Override
     public void clear() {
         for(int i = 0; i < size; i++) {
             storage[i] = null;
         }
+        size = 0;
     }
 
     @Override
@@ -124,22 +138,45 @@ public class ArrayListImpl<T> implements ArrayList<T>{
 
     @Override
     public Integer indexOf(Object o) {
-        return 1;
+        if(o == null) {
+            for(int i = 0; i < size; i++) {
+                if (storage[i] == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = 0; i < size; i++) {
+                if (o.equals(storage[i])) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     @Override
-    public boolean isEmpty(Object[] array) {
-        return false;
+    public boolean remove(int index) {
+        Object[] o = new Object[size - 1];
+        if(index < size - 1 && index > 0) {
+            copyOfRange(storage, o, 0, index);
+            copyOfRangeNextValues(storage, o, index + 1, size);
+            storage = o;
+        } else if(index == size - 1) {
+            copyOfRange(storage, o, 0, size - 1);
+            storage = o;
+        } else if(index == 0) {
+            copyOfRangeToNewArray(storage, o, 1, size);
+            storage = o;
+        }
+        size -= 1;
+        return true;
     }
 
     @Override
-    public void remove(int index) {
-
-    }
-
-    @Override
-    public void remove(Object o) {
-
+    public boolean remove(Object o) {
+        int removeIndex = this.indexOf(o);
+        remove(removeIndex);
+        return true;
     }
 
     @Override

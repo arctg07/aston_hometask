@@ -16,13 +16,13 @@ public interface ArrayList<T> {
 
     public T get(int index);
 
+    public T[] toArray();
+
     public Integer indexOf(T t);
 
-    public boolean isEmpty(T[] array);
+    public boolean remove(int index);
 
-    public void remove(int index);
-
-    public void remove(T t);
+    public boolean remove(T t);
 
     public void set(int index, T t);
 
