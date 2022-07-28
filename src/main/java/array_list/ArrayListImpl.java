@@ -75,6 +75,12 @@ public class ArrayListImpl<T> implements ArrayList<T>{
         size++;
     }
 
+    private void checkOutOfBounds(int index) {
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException(index);
+        }
+    }
+
     @Override
     public T[] toArray() {
         return (T[]) storage;
@@ -91,6 +97,7 @@ public class ArrayListImpl<T> implements ArrayList<T>{
 
     @Override
     public boolean add(int index, T element) {
+        checkOutOfBounds(index);
         if(index == size) {
             add(element);
         } else if(index < size) {
@@ -133,6 +140,7 @@ public class ArrayListImpl<T> implements ArrayList<T>{
 
     @Override
     public T get(int index) {
+        checkOutOfBounds(index);
         return (T) storage[index];
     }
 
@@ -155,7 +163,8 @@ public class ArrayListImpl<T> implements ArrayList<T>{
     }
 
     @Override
-    public boolean remove(int index) {
+    public boolean removeByIndex(int index) {
+        checkOutOfBounds(index);
         Object[] o = new Object[size - 1];
         if(index < size - 1 && index > 0) {
             copyOfRange(storage, o, 0, index);
@@ -175,14 +184,15 @@ public class ArrayListImpl<T> implements ArrayList<T>{
     @Override
     public boolean remove(Object o) {
         int removeIndex = this.indexOf(o);
-        remove(removeIndex);
+        this.removeByIndex(removeIndex);
         return true;
     }
 
     @Override
     public void set(int index, Object o) {
+        checkOutOfBounds(index);
         storage[index] = o;
     }
 
-    //TODO: replace method
+    //TODO: replace method?
 }

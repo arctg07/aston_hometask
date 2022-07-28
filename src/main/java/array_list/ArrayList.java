@@ -20,7 +20,7 @@ public interface ArrayList<T> {
 
     public Integer indexOf(T t);
 
-    public boolean remove(int index);
+    public boolean removeByIndex(int index);
 
     public boolean remove(T t);
 

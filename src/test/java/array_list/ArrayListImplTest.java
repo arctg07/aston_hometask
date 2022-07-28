@@ -2,8 +2,6 @@ package array_list;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ArrayListImplTest {
@@ -103,15 +101,15 @@ public class ArrayListImplTest {
         Integer[] array = {1, 2, 3, 4, 5};
         ArrayListImpl<Integer> arrayList = new ArrayListImpl(array);
 
-        boolean resultOne = arrayList.remove(4);
+        boolean resultOne = arrayList.removeByIndex(4);
         assertTrue(resultOne);
         assertEquals(4, arrayList.size());
 
-        boolean resultTwo = arrayList.remove(0);
+        boolean resultTwo = arrayList.removeByIndex(0);
         assertTrue(resultTwo);
         assertEquals(3, arrayList.size());
 
-        boolean resultThree = arrayList.remove(1);
+        boolean resultThree = arrayList.removeByIndex(1);
         assertTrue(resultThree);
         assertEquals(2, arrayList.size());
     }
@@ -122,7 +120,7 @@ public class ArrayListImplTest {
         Integer[] array = {1, 2, 3, 4, 5};
         ArrayListImpl<Integer> arrayList = new ArrayListImpl(array);
 
-        boolean resultOne = arrayList.remove((Integer) 4);
+        boolean resultOne = arrayList.remove(4);
         assertTrue(resultOne);
         assertEquals(4, arrayList.size());
 
