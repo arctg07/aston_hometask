@@ -2,7 +2,7 @@ package array_list;
 
 public class ArrayListImpl<T> implements ArrayList<T>{
 
-    private static final Object[] EMPTY_ARRAY = {};
+    private static final Object[] EMPTY_ARRAY = new Object[10];
 
     private Object[] storage;
 
@@ -23,58 +23,32 @@ public class ArrayListImpl<T> implements ArrayList<T>{
         }
     }
 
-    public ArrayListImpl(T[] o) {
-        if(o.length > 0) {
-            storage = new Object[o.length];
-            copyOfRange(o, storage, 0, o.length);
-            size = o.length;
+    public ArrayListImpl(T[] array) {
+        if(array.length > 0) {
+            storage = new Object[array.length];
+            copyOfRange(array, storage, 0);
+            size = array.length;
         } else {
             storage = EMPTY_ARRAY;
         }
     }
 
-    private void copyOfRange(Object[] resource, Object[] target, int start, int end) {
-        for(int i = start; i < end; i++) {
-            target[i] = resource[i];
-        }
-    }
-    private void copyOfRangeToNewArray(Object[] resource, Object[] target, int start, int end) {
-        int count = 0;
-        for(int i = start; i < end; i++) {
-            target[count] = resource[i];
-            count++;
-        }
-    }
-
-    private void copyOfRangeNextValues(Object[] resource, Object[] target, int start, int end) {
-        for(int i = start; i < end; i++) {
-            target[i - 1] = resource[i];
-        }
-    }
-
-    private void copyNextValues(Object[] resource) {
+    private void copyOfRange(Object[] resource, Object[] target, int targetStartIndex) {
         for(int i = 0; i < resource.length; i++) {
-            storage[size - resource.length + i] = resource[i];
+            target[targetStartIndex + i] = resource[i];
         }
     }
 
-    private void rebuild(int value) {
-        Object[] o = new Object[storage.length + value];
-        copyOfRange(storage, o, 0, storage.length);
-        storage = o;
-        size += value;
-    }
-
-    private void moveElementsForward(int index) {
-        Object[] o = new Object[size + 1];
-        copyOfRange(storage, o, 0, storage.length);
-        for(int i = index; i < size; i++) {
-            o[i + 1] = storage[i];
+    private void rebuild(int delta) {
+        if(size + delta <= storage.length) {
+            return;
         }
-        storage = o;
-        size++;
-    }
 
+        int storageDelta = Math.max(storage.length / 2, delta);
+        Object[] newStorage = new Object[storage.length + storageDelta];
+        copyOfRange(storage, newStorage, 0);
+        storage = newStorage;
+    }
     private void checkOutOfBounds(int index) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
@@ -83,41 +57,47 @@ public class ArrayListImpl<T> implements ArrayList<T>{
 
     @Override
     public T[] toArray() {
-        return (T[]) storage;
+        Object[] newArray = new Object[size];
+        for(int i = 0; i < size; i++) {
+            newArray[i] = storage[i];
+        }
+        return (T[]) newArray;
     }
-
     @Override
     public boolean add(T element) {
-        if(storage.length < size + 1) {
-            rebuild(1);
-        }
-        storage[size - 1] = element;
+        rebuild(1);
+        storage[size] = element;
+        size++;
+
         return true;
     }
 
     @Override
     public boolean add(int index, T element) {
         checkOutOfBounds(index);
-        if(index == size) {
-            add(element);
-        } else if(index < size) {
-            moveElementsForward(index);
-            set(index, element);
-        } else {
-            throw new IllegalArgumentException("Capacity less then ArrayList size: " + index);
+        rebuild(1);
+
+        for(int i = size - 1; i >= index; i--) {
+            storage[i + 1] = storage[i];
         }
+
+        storage[index] = element;
+        size++;
+
         return true;
     }
 
     @Override
-    public boolean addAll(T[] o) {
-        if(o.length > 0) {
-            rebuild(o.length);
-            copyNextValues(o);
-            return true;
-        } else {
-            throw new IllegalArgumentException("Passed array is empty: " + o);
+    public boolean addAll(T[] array) {
+        int delta = array.length;
+        if(delta == 0) {
+            return false;
         }
+
+        rebuild(delta);
+        copyOfRange(array, storage, delta);
+        size = size + delta;
+        return true;
     }
 
     @Override
@@ -141,12 +121,13 @@ public class ArrayListImpl<T> implements ArrayList<T>{
     @Override
     public T get(int index) {
         checkOutOfBounds(index);
+
         return (T) storage[index];
     }
 
     @Override
-    public Integer indexOf(Object o) {
-        if(o == null) {
+    public Integer indexOf(T element) {
+        if(element == null) {
             for(int i = 0; i < size; i++) {
                 if (storage[i] == null) {
                     return i;
@@ -154,7 +135,7 @@ public class ArrayListImpl<T> implements ArrayList<T>{
             }
         } else {
             for (int i = 0; i < size; i++) {
-                if (o.equals(storage[i])) {
+                if (element.equals(storage[i])) {
                     return i;
                 }
             }
@@ -165,34 +146,32 @@ public class ArrayListImpl<T> implements ArrayList<T>{
     @Override
     public boolean removeByIndex(int index) {
         checkOutOfBounds(index);
-        Object[] o = new Object[size - 1];
-        if(index < size - 1 && index > 0) {
-            copyOfRange(storage, o, 0, index);
-            copyOfRangeNextValues(storage, o, index + 1, size);
-            storage = o;
-        } else if(index == size - 1) {
-            copyOfRange(storage, o, 0, size - 1);
-            storage = o;
-        } else if(index == 0) {
-            copyOfRangeToNewArray(storage, o, 1, size);
-            storage = o;
+
+        for(int i = index; i < size - 1; i++) {
+            storage[i] = storage[i + 1];
         }
-        size -= 1;
+
+        storage[size - 1] = null;
+        size--;
+
         return true;
     }
 
     @Override
-    public boolean remove(Object o) {
-        int removeIndex = this.indexOf(o);
-        this.removeByIndex(removeIndex);
-        return true;
+    public boolean remove(T element) {
+        int index = indexOf(element);
+        if(index == -1) {
+            return false;
+        }
+
+        return removeByIndex(index);
     }
 
     @Override
-    public void set(int index, Object o) {
+    public void set(int index, T element) {
         checkOutOfBounds(index);
-        storage[index] = o;
+
+        storage[index] = element;
     }
 
-    //TODO: replace method?
 }
